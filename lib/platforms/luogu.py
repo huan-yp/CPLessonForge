@@ -68,8 +68,12 @@ async def fetch_statement(page: Page, pid: str) -> str:
     return "\n".join(parts)
 
 
-async def fetch_editorial(page: Page, pid: str) -> str | None:
-    """Fetch top-voted editorial. Requires login (persistent context)."""
+async def fetch_editorial(page: Page, pid: str, count: int = 5) -> str | None:
+    """Fetch top-voted editorials. Requires login (persistent context).
+
+    Args:
+        count: Number of solutions to fetch (default 5).
+    """
     await page.goto(
         f"https://www.luogu.com.cn/problem/solution/{pid}",
         wait_until="domcontentloaded",
@@ -96,15 +100,20 @@ async def fetch_editorial(page: Page, pid: str) -> str | None:
     if not solutions:
         return None
 
-    sol = solutions[0]
-    header = f"# {pid} 题解\n\n"
-    header += f"作者：{sol['author']['name']} | 点赞：{sol.get('upvote', 0)}\n\n---\n\n"
-    return header + sol["content"]
+    parts = [f"# {pid} 题解\n"]
+    for i, sol in enumerate(solutions[:count], 1):
+        author = sol["author"]["name"]
+        upvote = sol.get("upvote", 0)
+        parts.append(f"## 题解 {i} — {author}（{upvote} 赞）\n")
+        parts.append(sol["content"])
+        parts.append("\n\n---\n")
+
+    return "\n".join(parts)
 
 
 async def check_login(page: Page) -> bool:
     """Check if currently logged in to Luogu."""
-    await page.goto("https://www.luogu.com.cn", timeout=15000)
+    await page.goto("https://www.luogu.com.cn/problem/P1000", timeout=15000)
     await page.wait_for_load_state("domcontentloaded")
     await asyncio.sleep(2)
     logged_in = await page.evaluate("""
@@ -113,7 +122,7 @@ async def check_login(page: Page) -> bool:
             for (const s of scripts) {
                 try {
                     const d = JSON.parse(s.textContent);
-                    if (d.currentUser && d.currentUser.uid) return true;
+                    if (d.user && d.user.uid) return true;
                 } catch(e) {}
             }
             return false;

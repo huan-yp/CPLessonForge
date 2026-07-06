@@ -95,28 +95,30 @@ async def fetch_editorial(page: Page, problem_id: str) -> str | None:
     await page.goto(url, timeout=30000)
     await page.wait_for_load_state("domcontentloaded")
 
-    # Find editorial link for this problem (English preferred)
+    # Find editorial link for this problem
+    # Structure: <h3>G - Title</h3> <div class="editorial-section"><ul><li>...<a>...</li></ul></div>
     editorial_url = await page.evaluate("""
         (letter) => {
-            const links = document.querySelectorAll('a');
-            let best = null;
-            for (const a of links) {
-                const href = a.href || '';
-                const text = a.textContent.trim().toLowerCase();
-                if (!href.includes('/editorial/')) continue;
-                // Check if this section is for our problem letter
-                const section = a.closest('tr') || a.closest('div');
+            const headings = document.querySelectorAll('h3');
+            for (const h3 of headings) {
+                const hText = h3.textContent.trim().toLowerCase();
+                if (!hText.startsWith(letter + ' -') && !hText.startsWith(letter + ' ')) continue;
+                // Found the right problem section; next sibling is div.editorial-section
+                const section = h3.nextElementSibling;
                 if (!section) continue;
-                const sectionText = section.textContent.toLowerCase();
-                // Match problem letter in section (e.g., "g - similar permutation")
-                if (sectionText.includes(letter + ' -') || sectionText.includes(letter + ' ')) {
-                    if (text === 'editorial' || text.includes('english')) {
-                        return href;
-                    }
+                // Prefer English editorial, then any /editorial/ link
+                let best = null;
+                const links = section.querySelectorAll('a[href*="/editorial/"]');
+                for (const a of links) {
+                    const href = a.href;
+                    if (href.includes('/jump?')) continue;
+                    const text = a.textContent.trim().toLowerCase();
+                    if (text === 'editorial' || text.includes('english')) return href;
                     if (!best) best = href;
                 }
+                return best;
             }
-            return best;
+            return null;
         }
     """, letter)
 
