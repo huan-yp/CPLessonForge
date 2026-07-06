@@ -1,0 +1,17 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+
+# Browser persistent profiles (contain cookies/sessions)
+data/
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
