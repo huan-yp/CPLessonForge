@@ -1,6 +1,6 @@
-# problem-fetcher
+# CP-LessonForge
 
-从竞赛 OJ 平台批量获取题面和题解的 CLI 工具。支持 Luogu、AtCoder、Codeforces、QOJ。
+从竞赛 OJ 平台批量获取题面和题解的 CLI 工具。支持 Luogu、AtCoder、Codeforces、QOJ。主要用于备课。
 
 ## 安装
 
